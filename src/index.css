@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Open Sans', Arial, system-ui, sans-serif;
+    background-color: #f4f6f9;
+    color: #1d2649;
+  }
+}
+
+/* Tema Portal Resmi bergaya pajak.go.id (DJP Navy #093b6e, Blue #0088cc, Gold #ffc91b, Open Sans) */
+.djp-theme main .bg-slate-900\/70 {
+  background-color: #ffffff !important;
+  border-color: #dadff1 !important;
+  border-top: 4px solid #0088cc !important;
+  box-shadow: 0 2px 8px rgba(9, 59, 110, 0.06) !important;
+}
+
+.djp-theme main .bg-slate-950,
+.djp-theme main .bg-slate-950\/60,
+.djp-theme main .bg-slate-950\/70,
+.djp-theme main .bg-slate-950\/80,
+.djp-theme main .bg-slate-950\/90,
+.djp-theme main .bg-slate-900 {
+  background-color: #f8fafd !important;
+  border-color: #d4dceb !important;
+  color: #1d2649 !important;
+}
+
+.djp-theme main .text-white {
+  color: #093b6e !important;
+}
+
+.djp-theme main .text-slate-100,
+.djp-theme main .text-slate-200,
+.djp-theme main .text-slate-300 {
+  color: #1d2649 !important;
+}
+
+.djp-theme main .text-slate-400,
+.djp-theme main .text-slate-500 {
+  color: #556278 !important;
+}
+
+.djp-theme main .text-emerald-400,
+.djp-theme main .text-emerald-300 {
+  color: #0088cc !important;
+}
+
+.djp-theme main .border-slate-800,
+.djp-theme main .border-slate-800\/80,
+.djp-theme main .border-slate-700 {
+  border-color: #dadff1 !important;
+}
+
+.djp-theme main input:not([type="color"]),
+.djp-theme main textarea,
+.djp-theme main select {
+  background-color: #ffffff !important;
+  border-color: #c5d0e6 !important;
+  color: #1d2649 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.djp-theme main input:focus,
+.djp-theme main textarea:focus,
+.djp-theme main select:focus {
+  border-color: #0088cc !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.15) !important;
+}
+
+/* Tombol aksi utama bergaya pajak.go.id (#0088cc & #093b6e) */
+.djp-theme main .bg-emerald-600,
+.djp-theme main .from-emerald-600 {
+  background: #0088cc !important;
+  border-color: #0077b3 !important;
+  color: #ffffff !important;
+}
+
+.djp-theme main .bg-emerald-600:hover,
+.djp-theme main .from-emerald-600:hover {
+  background: #0099e6 !important;
+  color: #ffffff !important;
+}
+
+/* Kartu pilihan aktif dengan aksen Kuning Emas DJP (#ffc91b) & Biru (#0088cc) */
+.djp-theme main .border-emerald-500 {
+  border-color: #0088cc !important;
+  background-color: #edeff8 !important;
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #edeff8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #919fd4;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #093b6e;
+}

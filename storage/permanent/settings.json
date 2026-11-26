@@ -1,0 +1,9 @@
+{
+  "operatorName": "Operator Desa Tobadak",
+  "operatorRole": "Admin Media Pemdes Tobadak",
+  "aiProvider": "auto",
+  "geminiApiKey": "",
+  "openaiApiKey": "",
+  "defaultPlatform": "ig_feed",
+  "sessionTtlMinutes": 60
+}

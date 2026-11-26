@@ -1,0 +1,11 @@
+[
+  {
+    "id": "user-admin-1",
+    "name": "Operator Desa Tobadak",
+    "username": "admin",
+    "email": "admin@tobadak.desa.id",
+    "role": "Admin Media Pemdes Tobadak",
+    "passwordHash": "784e79222ad9c632ed776e67ecea07fb:976abf39c04473d1bd8b54dd4cb4b4526d3a7ecdd76e509cdbf75106e9d58318fb12c9952b3773c08834166158f7babe6f4f2ca408bedafc721c59e74a85dd2d",
+    "createdAt": "2026-11-26T05:21:16.802Z"
+  }
+]

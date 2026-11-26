@@ -1,0 +1,62 @@
+[
+  {
+    "id": "berita-modern",
+    "name": "Berita Desa Modern",
+    "category": "Berita",
+    "description": "Layout berita bersih dengan foto utama, badge kategori, dan footer identitas desa.",
+    "layout": "photo-top",
+    "showHeader": true,
+    "showFooter": true,
+    "showWatermark": true,
+    "overlayStyle": "gradient-bottom",
+    "badgeText": "BERITA DESA"
+  },
+  {
+    "id": "pengumuman-resmi",
+    "name": "Pengumuman Resmi",
+    "category": "Pengumuman",
+    "description": "Header tegas dengan warna branding utama, cocok untuk edaran dan layanan publik.",
+    "layout": "banner-official",
+    "showHeader": true,
+    "showFooter": true,
+    "showWatermark": true,
+    "overlayStyle": "solid-card",
+    "badgeText": "PENGUMUMAN"
+  },
+  {
+    "id": "agenda-kegiatan",
+    "name": "Agenda & Kegiatan",
+    "category": "Agenda",
+    "description": "Fokus visual penuh dengan kartu judul di bagian bawah untuk dokumentasi kegiatan.",
+    "layout": "full-bleed",
+    "showHeader": true,
+    "showFooter": true,
+    "showWatermark": true,
+    "overlayStyle": "gradient-bottom",
+    "badgeText": "KEGIATAN DESA"
+  },
+  {
+    "id": "umkm-potensi",
+    "name": "Potensi & UMKM Desa",
+    "category": "Ekonomi",
+    "description": "Tampilan hangat dengan aksen warna cerah untuk promosi produk lokal dan wisata.",
+    "layout": "split-frame",
+    "showHeader": true,
+    "showFooter": true,
+    "showWatermark": true,
+    "overlayStyle": "accent-frame",
+    "badgeText": "POTENSI DESA"
+  },
+  {
+    "id": "infografis-ringkas",
+    "name": "Ringkasan Informasi",
+    "category": "Edukasi",
+    "description": "Menonjolkan judul dan ringkasan berita agar mudah dibaca di feed media sosial.",
+    "layout": "editorial-card",
+    "showHeader": true,
+    "showFooter": true,
+    "showWatermark": false,
+    "overlayStyle": "clean-light",
+    "badgeText": "INFO WARGA"
+  }
+]
