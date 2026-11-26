@@ -34,7 +34,8 @@ import {
   AuthUser,
   authFetch,
   clearAuthToken,
-  getAuthToken,
+  safeParseJson,
+  verifySessionUser,
 } from './utils/auth';
 import {
   clearImageCache,
@@ -174,16 +175,10 @@ export function App() {
 
   // Verify existing auth token on startup
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
-      setAuthChecking(false);
-      return;
-    }
-    authFetch('/api/auth/me')
-      .then(async (r) => {
-        if (!r.ok) throw new Error('Unauthorized');
-        const data = await r.json();
-        setAuthUser(data.user || null);
+    verifySessionUser()
+      .then((user) => {
+        if (!user) clearAuthToken();
+        setAuthUser(user);
       })
       .catch(() => {
         clearAuthToken();
@@ -195,10 +190,21 @@ export function App() {
   // Load permanent config once authenticated
   useEffect(() => {
     if (!authUser) return;
+    const fetchJsonOrNull = async <T,>(url: string): Promise<T | null> => {
+      try {
+        const res = await authFetch(url);
+        if (!res.ok) return null;
+        const parsed = await safeParseJson<T>(res);
+        return parsed.ok ? parsed.data : null;
+      } catch {
+        return null;
+      }
+    };
+
     Promise.all([
-      authFetch('/api/permanent/brand-kit').then((r) => r.json()),
-      authFetch('/api/permanent/settings').then((r) => r.json()),
-      authFetch('/api/permanent/templates').then((r) => r.json()),
+      fetchJsonOrNull<BrandKit>('/api/permanent/brand-kit'),
+      fetchJsonOrNull<AppSettings>('/api/permanent/settings'),
+      fetchJsonOrNull<MasterTemplate[]>('/api/permanent/templates'),
     ])
       .then(([bk, st, tpls]) => {
         let resolvedBrandKit = INITIAL_BRAND_KIT;

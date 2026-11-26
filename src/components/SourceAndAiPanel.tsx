@@ -20,7 +20,7 @@ import {
   ContentGoal,
   CrawledArticle,
 } from '../types';
-import { authFetch } from '../utils/auth';
+import { authFetch, safeParseJson } from '../utils/auth';
 
 interface Props {
   sessionId: string;
@@ -159,7 +159,11 @@ export const SourceAndAiPanel: React.FC<Props> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: targetCrawlUrl, sessionId }),
       });
-      const data = await res.json();
+      const parsed = await safeParseJson<{ method?: string; articles?: CrawledArticle[]; error?: string }>(res);
+      if (!parsed.ok || !parsed.data) {
+        throw new Error('Backend crawler tidak tersedia di mode static hosting. Gunakan "Muat Contoh Artikel" atau Input Manual.');
+      }
+      const data = parsed.data;
       if (!res.ok) throw new Error(data.error || 'Gagal crawl website.');
       setCrawlMethod(data.method || 'Crawler');
       onCrawledArticles(data.articles || []);
@@ -220,8 +224,38 @@ export const SourceAndAiPanel: React.FC<Props> = ({
           leaderName: isGreetingMode ? leaderName.trim() : '',
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Gagal generate konten.');
+      const parsed = await safeParseJson<AiGeneratedContent & { error?: string }>(res);
+      let data: AiGeneratedContent;
+      if (!parsed.ok || !parsed.data) {
+        // Static-host fallback (e.g. Netlify without Node server)
+        const shortVillage = (brandKit.villageName || 'Desa Tobadak').replace(/^Pemerintah\s+/i, '');
+        const cleanBody = content || (isGreetingMode
+          ? `${leaderName.trim() || `Kepala ${shortVillage}`} beserta jajaran ${brandKit.villageName} mengucapkan Selamat ${title}.`
+          : `${title}. Informasi resmi dari ${brandKit.villageName}.`);
+        data = {
+          provider: 'Browser Local Generator',
+          posterTitle: isGreetingMode && !/^selamat\b/i.test(title) ? `Selamat ${title}` : title,
+          posterSubtitle: cleanBody.slice(0, 105),
+          newsSummary: cleanBody,
+          captionInstagram: `${title.toUpperCase()}\n\n${cleanBody}\n\n#PemdesTobadak #InfoDesa #DesaMaju`,
+          captionFacebook: `[${shortVillage.toUpperCase()}] ${title}\n\n${cleanBody}\n\n#PemdesTobadak #InfoDesa`,
+          hashtags: '#PemdesTobadak #InfoDesa #KabarDesa #DesaMaju',
+          photoCaption: `${title} — ${brandKit.villageName}`,
+          reelsConcept: {
+            hook: `${title} — ${shortVillage}`,
+            durationSec: 15,
+            slides: [
+              { headline: title, subtitle: shortVillage, durationSec: 4 },
+              { headline: 'Informasi Utama', subtitle: cleanBody.slice(0, 90), durationSec: 5 },
+              { headline: 'Bagikan Info Ini', subtitle: `Ikuti terus info resmi ${shortVillage}`, durationSec: 4 },
+            ],
+            outroCta: `Ikuti terus info resmi ${shortVillage}!`,
+          },
+        };
+      } else {
+        if (!res.ok) throw new Error(parsed.data.error || 'Gagal generate konten.');
+        data = parsed.data;
+      }
       onAiContentChange(data);
       onApplyToStudio({
         title: data.posterTitle || title,

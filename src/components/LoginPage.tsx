@@ -11,7 +11,12 @@ import {
   Loader2,
   ShieldCheck,
 } from 'lucide-react';
-import { AuthUser, setAuthToken } from '../utils/auth';
+import {
+  AuthUser,
+  loginAccount,
+  registerAccount,
+  setAuthToken,
+} from '../utils/auth';
 
 interface Props {
   onLoginSuccess: (user: AuthUser) => void;
@@ -40,21 +45,10 @@ export const LoginPage: React.FC<Props> = ({ onLoginSuccess }) => {
 
     setLoading(true);
     try {
-      const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
-      const payload =
+      const data =
         mode === 'login'
-          ? { identifier, password }
-          : { name, username, email, password };
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Autentikasi gagal.');
-      }
+          ? await loginAccount(identifier, password)
+          : await registerAccount({ name, username, email, password });
       setAuthToken(data.token);
       onLoginSuccess(data.user);
     } catch (err: unknown) {
