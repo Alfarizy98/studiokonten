@@ -96,6 +96,127 @@ function wrapText(
   return lines;
 }
 
+function drawGraphPaperGrid(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  scale: number
+) {
+  ctx.save();
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(x, y, w, h);
+  const step = Math.max(24, Math.round(44 * scale));
+  ctx.strokeStyle = 'rgba(203, 213, 225, 0.55)';
+  ctx.lineWidth = Math.max(1, scale);
+  ctx.beginPath();
+  for (let gx = x; gx <= x + w; gx += step) {
+    ctx.moveTo(gx, y);
+    ctx.lineTo(gx, y + h);
+  }
+  for (let gy = y; gy <= y + h; gy += step) {
+    ctx.moveTo(x, gy);
+    ctx.lineTo(x + w, gy);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawKemendesaTopLogos(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  padX: number,
+  scale: number,
+  villageLogoImg: HTMLImageElement | null,
+  regencyLogoImg: HTMLImageElement | null,
+  accent: string,
+  hashtagLabel: string
+) {
+  const logoSize = Math.round(68 * scale);
+  const topY = Math.round(32 * scale);
+
+  if (villageLogoImg) {
+    drawContainLogo(ctx, villageLogoImg, padX, topY, logoSize);
+  } else {
+    drawDefaultEmblemLogo(ctx, padX, topY, logoSize, 'village', accent);
+  }
+
+  if (regencyLogoImg) {
+    drawContainLogo(ctx, regencyLogoImg, padX + logoSize + Math.round(14 * scale), topY, logoSize);
+  } else {
+    drawDefaultEmblemLogo(ctx, padX + logoSize + Math.round(14 * scale), topY, logoSize, 'regency', accent);
+  }
+
+  // Right-side campaign hashtag badge (#BANGUN TOBADAK, BANGUN INDONESIA)
+  ctx.save();
+  const tagText = hashtagLabel.toUpperCase();
+  ctx.font = `800 ${Math.round(19 * scale)}px "Plus Jakarta Sans", sans-serif`;
+  const tw = ctx.measureText(tagText).width + Math.round(32 * scale);
+  const th = Math.round(42 * scale);
+  const tx = W - padX - tw;
+  const ty = topY + Math.round(12 * scale);
+  ctx.fillStyle = 'rgba(27, 42, 120, 0.88)';
+  drawRoundedRect(ctx, tx, ty, tw, th, 8 * scale);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(tagText, tx + tw / 2, ty + th / 2 + 1);
+  ctx.restore();
+}
+
+function drawKemendesaFooterBar(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  padX: number,
+  scale: number,
+  primary: string,
+  secondary: string,
+  accent: string,
+  brandKit: BrandKit,
+  font: string
+) {
+  const footerH = Math.round(92 * scale);
+  const footerY = H - footerH;
+  ctx.save();
+  const grad = ctx.createLinearGradient(0, footerY, W, footerY);
+  grad.addColorStop(0, primary);
+  grad.addColorStop(1, secondary);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, footerY, W, footerH);
+
+  // Left brand identity
+  const shortVillage = (brandKit.villageName || 'Pemerintah Desa Tobadak').toUpperCase();
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.font = `800 ${Math.round(22 * scale)}px "${font}", sans-serif`;
+  ctx.fillText(shortVillage, padX, footerY + footerH * 0.38);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.font = `500 ${Math.round(15 * scale)}px "${font}", sans-serif`;
+  ctx.fillText(
+    `${brandKit.districtName} • ${brandKit.regencyName}`,
+    padX,
+    footerY + footerH * 0.68
+  );
+
+  // Right website & social handle
+  const website = brandKit.websiteUrl || 'www.tobadak.desa.id';
+  const social = brandKit.socialHandle || 'Pemdes Tobadak';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `700 ${Math.round(20 * scale)}px "${font}", sans-serif`;
+  ctx.fillText(website, W - padX, footerY + footerH * 0.38);
+
+  ctx.fillStyle = accent;
+  ctx.font = `600 ${Math.round(16 * scale)}px "${font}", sans-serif`;
+  ctx.fillText(`@${social.replace(/^@/, '')}`, W - padX, footerY + footerH * 0.68);
+  ctx.restore();
+}
+
 function drawRoundedRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -551,6 +672,265 @@ export async function renderPosterToCanvas(
         accent,
         secondary
       );
+    }
+    return;
+  }
+
+  // ============================================================================
+  // SPECIAL LAYOUTS: KEMENDESA PDTT STYLE (Siaran Pers, Kutipan Tokoh, Info Program)
+  // ============================================================================
+  if (
+    layout === 'kemendesa-siaran' ||
+    layout === 'kemendesa-quote' ||
+    layout === 'kemendesa-info'
+  ) {
+    const padX = Math.round(52 * scale);
+    const footerH = poster.showFooter ? Math.round(92 * scale) : 0;
+
+    if (layout === 'kemendesa-siaran') {
+      // 1. White graph-paper grid base
+      drawGraphPaperGrid(ctx, 0, 0, W, H, scale);
+
+      // 2. Upper photo area (~64% height) with soft white fade into grid
+      const photoH = Math.round(H * 0.66);
+      if (photoImg) {
+        drawCoverImage(ctx, photoImg, 0, 0, W, photoH);
+      } else {
+        drawJournalisticBackdrop(ctx, W, photoH, primary, secondary);
+      }
+
+      const topFade = ctx.createLinearGradient(0, 0, 0, Math.round(140 * scale));
+      topFade.addColorStop(0, 'rgba(15, 24, 71, 0.48)');
+      topFade.addColorStop(1, 'rgba(15, 24, 71, 0)');
+      ctx.fillStyle = topFade;
+      ctx.fillRect(0, 0, W, Math.round(140 * scale));
+
+      const bottomFade = ctx.createLinearGradient(0, photoH * 0.56, 0, photoH);
+      bottomFade.addColorStop(0, 'rgba(248, 250, 252, 0)');
+      bottomFade.addColorStop(0.75, 'rgba(248, 250, 252, 0.85)');
+      bottomFade.addColorStop(1, '#f8fafc');
+      ctx.fillStyle = bottomFade;
+      ctx.fillRect(0, photoH * 0.56, W, photoH * 0.44);
+
+      if (poster.showHeader) {
+        drawKemendesaTopLogos(
+          ctx,
+          W,
+          padX,
+          scale,
+          villageLogoImg,
+          regencyLogoImg,
+          accent,
+          '#BANGUN TOBADAK, BANGUN INDONESIA'
+        );
+      }
+
+      // 3. Two-tone pill badge (e.g., SIARAN | PERS or KABAR | DESA)
+      const badgeRaw = (poster.badgeText || 'SIARAN PERS').toUpperCase().trim();
+      const parts = badgeRaw.split(/\s+/);
+      const leftWord = parts[0] || 'SIARAN';
+      const rightWord = parts.slice(1).join(' ') || 'DESA';
+
+      ctx.font = `800 ${Math.round(23 * scale)}px "${font}", sans-serif`;
+      const lw = ctx.measureText(leftWord).width + Math.round(42 * scale);
+      const rw = ctx.measureText(rightWord).width + Math.round(42 * scale);
+      const pillW = lw + rw;
+      const pillH = Math.round(48 * scale);
+      const pillX = (W - pillW) / 2;
+      const pillY = Math.round(H * 0.54);
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(15, 23, 42, 0.22)';
+      ctx.shadowBlur = 14 * scale;
+      ctx.shadowOffsetY = 4 * scale;
+
+      ctx.fillStyle = primary;
+      drawRoundedRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(pillX + lw, pillY + 2, rw - 2, pillH - 4, [0, pillH / 2, pillH / 2, 0]);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(leftWord, pillX + lw / 2, pillY + pillH / 2 + 1);
+      ctx.fillStyle = primary;
+      ctx.fillText(rightWord, pillX + lw + rw / 2, pillY + pillH / 2 + 1);
+
+      // 4. Bold uppercase navy headline on crisp white pill strips
+      const titleFontSize = Math.round((isLandscape ? 36 : 44) * scale);
+      ctx.font = `800 ${titleFontSize}px "${font}", sans-serif`;
+      const titleLines = wrapText(ctx, (poster.title || 'Judul Berita').toUpperCase(), W - padX * 2.3).slice(0, 3);
+      let lineY = pillY + pillH + Math.round(26 * scale);
+      const stripH = Math.round(titleFontSize * 1.36);
+
+      for (const line of titleLines) {
+        const lineW = ctx.measureText(line).width + Math.round(44 * scale);
+        const sx = (W - lineW) / 2;
+        ctx.save();
+        ctx.shadowColor = 'rgba(15, 23, 42, 0.14)';
+        ctx.shadowBlur = 12 * scale;
+        ctx.shadowOffsetY = 4 * scale;
+        ctx.fillStyle = '#ffffff';
+        drawRoundedRect(ctx, sx, lineY, lineW, stripH, 10 * scale);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = primary;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(line, W / 2, lineY + stripH / 2 + 1);
+        lineY += stripH + Math.round(12 * scale);
+      }
+    } else if (layout === 'kemendesa-quote') {
+      // 1. Clean white graph-paper grid background
+      drawGraphPaperGrid(ctx, 0, 0, W, H, scale);
+
+      if (poster.showHeader) {
+        drawKemendesaTopLogos(
+          ctx,
+          W,
+          padX,
+          scale,
+          villageLogoImg,
+          regencyLogoImg,
+          accent,
+          '#DESA TOBADAK'
+        );
+      }
+
+      // 2. Centered circular/rounded portrait of Kepala Desa / Tokoh
+      const portraitSize = Math.round((isLandscape ? 220 : 320) * scale);
+      const px = (W - portraitSize) / 2;
+      const py = Math.round((isLandscape ? 110 : 145) * scale);
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(27, 42, 120, 0.22)';
+      ctx.shadowBlur = 24 * scale;
+      ctx.fillStyle = primary;
+      ctx.beginPath();
+      ctx.arc(px + portraitSize / 2, py + portraitSize / 2, portraitSize / 2 + 8 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(px + portraitSize / 2, py + portraitSize / 2, portraitSize / 2, 0, Math.PI * 2);
+      ctx.clip();
+      if (photoImg) {
+        drawCoverImage(ctx, photoImg, px, py, portraitSize, portraitSize);
+      } else {
+        drawJournalisticBackdrop(ctx, portraitSize, portraitSize, primary, secondary);
+      }
+      ctx.restore();
+
+      // 3. Oversized decorative quote mark
+      const quoteTop = py + portraitSize + Math.round(36 * scale);
+      ctx.fillStyle = accent;
+      ctx.font = `800 ${Math.round(88 * scale)}px "Merriweather", serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('“', padX, quoteTop - Math.round(18 * scale));
+
+      // 4. Bold navy quote headline + subtitle
+      const quoteFontSize = Math.round((isLandscape ? 32 : 40) * scale);
+      ctx.font = `800 ${quoteFontSize}px "${font}", sans-serif`;
+      const qLines = wrapText(ctx, poster.title || 'Kutipan Resmi', W - padX * 2.4).slice(0, 4);
+      let qy = quoteTop + Math.round(28 * scale);
+      ctx.fillStyle = primary;
+      ctx.textAlign = 'center';
+      for (const line of qLines) {
+        ctx.fillText(line, W / 2, qy);
+        qy += Math.round(quoteFontSize * 1.28);
+      }
+
+      if (poster.subtitle) {
+        ctx.font = `600 ${Math.round(22 * scale)}px "${font}", sans-serif`;
+        ctx.fillStyle = '#475569';
+        const sLines = wrapText(ctx, poster.subtitle, W - padX * 2.5).slice(0, 2);
+        qy += Math.round(12 * scale);
+        for (const sl of sLines) {
+          ctx.fillText(sl, W / 2, qy);
+          qy += Math.round(30 * scale);
+        }
+      }
+    } else {
+      // kemendesa-info: Navy top header + white grid body with framed photo & info card
+      drawGraphPaperGrid(ctx, 0, 0, W, H, scale);
+
+      const topBarH = Math.round(132 * scale);
+      const topGrad = ctx.createLinearGradient(0, 0, W, 0);
+      topGrad.addColorStop(0, primary);
+      topGrad.addColorStop(1, secondary);
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(0, 0, W, topBarH);
+
+      if (poster.showHeader) {
+        drawKemendesaTopLogos(
+          ctx,
+          W,
+          padX,
+          scale,
+          villageLogoImg,
+          regencyLogoImg,
+          accent,
+          poster.badgeText || 'INFO DESA'
+        );
+      }
+
+      // Photo card in upper-middle
+      const cardY = topBarH + Math.round(28 * scale);
+      const cardW = W - padX * 2;
+      const cardH = Math.round((H - topBarH - footerH) * 0.48);
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(15, 23, 42, 0.16)';
+      ctx.shadowBlur = 20 * scale;
+      ctx.beginPath();
+      ctx.roundRect(padX, cardY, cardW, cardH, 20 * scale);
+      ctx.clip();
+      if (photoImg) {
+        drawCoverImage(ctx, photoImg, padX, cardY, cardW, cardH);
+      } else {
+        drawJournalisticBackdrop(ctx, cardW, cardH, primary, secondary);
+      }
+      ctx.restore();
+
+      // Info block below photo
+      let textY = cardY + cardH + Math.round(30 * scale);
+      const titleFontSize = Math.round((isLandscape ? 32 : 40) * scale);
+      ctx.font = `800 ${titleFontSize}px "${font}", sans-serif`;
+      ctx.fillStyle = primary;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      const tLines = wrapText(ctx, poster.title || 'Informasi Program Desa', cardW).slice(0, 3);
+      for (const line of tLines) {
+        ctx.fillText(line, padX, textY);
+        textY += Math.round(titleFontSize * 1.24);
+      }
+
+      if (poster.subtitle) {
+        textY += Math.round(12 * scale);
+        ctx.fillStyle = accent;
+        drawRoundedRect(ctx, padX, textY, Math.round(6 * scale), Math.round(64 * scale), 3 * scale);
+        ctx.fill();
+
+        ctx.fillStyle = '#334155';
+        ctx.font = `500 ${Math.round(23 * scale)}px "${font}", sans-serif`;
+        const sLines = wrapText(ctx, poster.subtitle, cardW - Math.round(24 * scale)).slice(0, 3);
+        for (const sl of sLines) {
+          ctx.fillText(sl, padX + Math.round(22 * scale), textY);
+          textY += Math.round(31 * scale);
+        }
+      }
+    }
+
+    if (poster.showFooter) {
+      drawKemendesaFooterBar(ctx, W, H, padX, scale, primary, secondary, accent, brandKit, font);
     }
     return;
   }

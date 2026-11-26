@@ -79,7 +79,16 @@ export interface MasterTemplate {
   name: string;
   category: string;
   description: string;
-  layout: 'pemdes-overlay' | 'photo-top' | 'banner-official' | 'full-bleed' | 'split-frame' | 'editorial-card';
+  layout:
+    | 'pemdes-overlay'
+    | 'kemendesa-siaran'
+    | 'kemendesa-quote'
+    | 'kemendesa-info'
+    | 'photo-top'
+    | 'banner-official'
+    | 'full-bleed'
+    | 'split-frame'
+    | 'editorial-card';
   showHeader: boolean;
   showFooter: boolean;
   showWatermark: boolean;
